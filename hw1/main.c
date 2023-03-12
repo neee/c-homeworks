@@ -1,6 +1,6 @@
-//
-// Created by Sergey Serdyuk on 09.03.2023.
-//
+/**
+ * Created by Sergey Serdyuk on 09.03.2023.
+ */
 #include <stdio.h>
 #include <stdlib.h>
 
