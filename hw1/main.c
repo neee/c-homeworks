@@ -42,10 +42,13 @@ int main() {
     printf("Compressed file size: %u bytes\n", *compressed_file_length);
 
     // Get file name length
-    fseek(fp, 26, SEEK_SET);
     uint16_t *filename_length = calloc(1, sizeof(uint16_t));
     fread(filename_length, sizeof(uint16_t), 1, fp);
-    printf("File name length %u\n", *filename_length);
+    printf("Filename length: %u\n", *filename_length);
+
+    uint16_t *extra_filed_length = calloc(1, sizeof(uint16_t));
+    fread(extra_filed_length, sizeof(uint16_t), 1, fp);
+    printf("Extra field length: %u\n", *extra_filed_length);
 
     // Get file name chars
     char *filename1 = calloc(*filename_length, sizeof(char));
@@ -54,13 +57,12 @@ int main() {
         exit(EXIT_SUCCESS);
     }
 
-    fseek(fp, 2, SEEK_CUR);
     fread(filename1, sizeof(char), *filename_length, fp);
     /**
      * Вопрос:
      * Возможно как-то упросить вывод строки (не использвоать цикл)
      */
-    printf("Filename1: ");
+    printf("Filename: ");
     for (int i = 0; i < *filename_length; ++i) {
         printf("%c", filename1[i]);
     }
@@ -76,8 +78,9 @@ int main() {
      * но для начала надо чтобы 2й файл тоже показал свою сигнатуру.
      * Вообщем нужна помощь понять почему смещение не верное.
      */
-    fseek(fp, *compressed_file_length, SEEK_CUR);
-    fseek(fp, 12, SEEK_CUR);
+
+    fseek(fp, *extra_filed_length + *compressed_file_length, SEEK_CUR);
+
     uint32_t *buffer3 = calloc(1, sizeof(uint32_t));
     fread(buffer3, sizeof(uint32_t), 1, fp);
     printf("New file signature: %x\n", *buffer3);
