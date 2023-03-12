@@ -10,7 +10,7 @@
 
 int main(int argc, char **argv) {
     char *file_path = argv[1];
-    if (file_path == NULL && argc == 0) {
+    if (file_path == NULL && argc <= 1) {
         printf("Input file path as first argument (example: \"./main test.zip\")");
         exit(EXIT_FAILURE);
     }
