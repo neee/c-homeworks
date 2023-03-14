@@ -5,8 +5,8 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#define LOCAL_FILE_SIGNATURE 0x4034b50
-#define CENTRAL_DIRECTORY_SIGNATURE 0x2014b50
+#define LOCAL_FILE_SIGNATURE 0x04034b50
+#define CENTRAL_DIRECTORY_SIGNATURE 0x02014b50
 
 int main(int argc, char **argv) {
     char *file_path = argv[1];
