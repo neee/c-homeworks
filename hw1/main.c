@@ -8,6 +8,8 @@
 #define LOCAL_FILE_SIGNATURE 0x04034b50
 #define CENTRAL_DIRECTORY_SIGNATURE 0x02014b50
 
+FILE *get_file(const char *file_path);
+
 int main(int argc, char **argv) {
     char *file_path = argv[1];
     if (file_path == NULL && argc <= 1) {
@@ -15,12 +17,7 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    printf("Input file: %s\n", file_path);
-    FILE *fp = fopen(file_path, "r");
-    if (fp == NULL) {
-        printf("File not found");
-        exit(EXIT_FAILURE);
-    }
+    FILE *fp = get_file(file_path);
 
     while (true) {
         uint32_t current_signature;
@@ -76,4 +73,14 @@ int main(int argc, char **argv) {
     printf("Done!");
     fclose(fp);
     exit(EXIT_SUCCESS);
+}
+
+FILE *get_file(const char *file_path) {
+    printf("Input file: %s\n", file_path);
+    FILE *fp = fopen(file_path, "r");
+    if (fp == NULL) {
+        printf("File not found");
+        exit(EXIT_FAILURE);
+    }
+    return fp;
 }
