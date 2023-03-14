@@ -23,19 +23,9 @@ int main(int argc, char **argv) {
     }
 
     while (true) {
-        /**
-         * Я каждый раз делаю calloc но может на стеке правильней выделять под такие быстроживущие перменные память, хорошо бы прояснить что лушче и в какой момент
-         * еще не ясно если делать на стеке переменную то fread ее не примит в качестве аргумента так как ему надо указатель передавать
-        */
-        uint32_t *current_signature = calloc(1, sizeof(uint32_t));
-        if (current_signature == 0) {
-            printf("Out of memory, can't allocate memory for current file signature");
-            fclose(fp);
-            exit(EXIT_FAILURE);
-        }
-
+        uint32_t current_signature;
         // Break if EOF
-        size_t read_status = fread(current_signature, sizeof(uint32_t), 1, fp);
+        size_t read_status = fread(&current_signature, sizeof(uint32_t), 1, fp);
         if (!read_status) {
             break;
         }
@@ -43,18 +33,17 @@ int main(int argc, char **argv) {
         /**
          * Не ясно что лучше использовать макро переменную или константу для CENTRAL_DIRECTORY_SIGNATURE и LOCAL_FILE_SIGNATURE
          */
-        if (CENTRAL_DIRECTORY_SIGNATURE == *current_signature) {
+        if (CENTRAL_DIRECTORY_SIGNATURE == current_signature) {
             break;
         }
 
-        printf("Current file signature: %x\n", *current_signature);
-        if (LOCAL_FILE_SIGNATURE != *current_signature) {
+        printf("Current file signature: %x\n", current_signature);
+        if (LOCAL_FILE_SIGNATURE != current_signature) {
             printf("File isn't zip archive\n");
             fclose(fp);
             exit(EXIT_SUCCESS);
         }
         printf("File is zip archive\n");
-        free(current_signature);
 
         // Get file length
         fseek(fp, 14, SEEK_CUR);
