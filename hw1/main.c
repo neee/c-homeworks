@@ -33,6 +33,8 @@ int main(int argc, char **argv) {
                 if (!is_zip_archive) {
                     printf("File isn't zip archive\n");
                 }
+                printf("Done!");
+                fclose(fp);
                 exit(EXIT_SUCCESS);
             }
             if (LOCAL_FILE_SIGNATURE == current_signature) {
@@ -54,14 +56,14 @@ int main(int argc, char **argv) {
         // Get file name length
         uint16_t filename_length = 0;
         fread(&filename_length, sizeof(uint16_t), 1, fp);
-        printf("Filename length: %u\n", filename_length);
+        printf("Filename length: %u\n", filename_length + 1);
 
         uint16_t extra_filed_length = 0;
         fread(&extra_filed_length, sizeof(uint16_t), 1, fp);
         printf("Extra field length: %u\n", extra_filed_length);
 
         // Get file name chars
-        char *filename = calloc(filename_length, sizeof(char));
+        char *filename = calloc(filename_length + 1, sizeof(char));
         if (filename == 0) {
             printf("Out of memory, can't allocate memory for file size");
             exit(EXIT_SUCCESS);
@@ -74,10 +76,6 @@ int main(int argc, char **argv) {
 
         free(filename);
     }
-
-    printf("Done!");
-    fclose(fp);
-    exit(EXIT_SUCCESS);
 }
 
 FILE *get_file(const char *file_path) {
