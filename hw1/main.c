@@ -9,7 +9,6 @@
 #include <stdlib.h>
 
 #define LOCAL_FILE_SIGNATURE 0x04034b50
-#define CENTRAL_DIRECTORY_SIGNATURE 0x02014b50
 
 FILE *get_file(const char *file_path);
 
@@ -21,26 +20,30 @@ int main(int argc, char **argv) {
     }
 
     FILE *fp = get_file(file_path);
+    bool is_zip_archive = false;
 
     while (true) {
         uint32_t current_signature = 0;
         // Break if EOF
-        size_t read_status = fread(&current_signature, sizeof(uint32_t), 1, fp);
-        if (!read_status) {
-            break;
+        size_t read_status;
+        while (true) {
+            read_status = fread(&current_signature, sizeof(uint32_t), 1, fp);
+            if (!read_status) {
+                fclose(fp);
+                if (!is_zip_archive) {
+                    printf("File isn't zip archive\n");
+                }
+                exit(EXIT_SUCCESS);
+            }
+            if (LOCAL_FILE_SIGNATURE == current_signature) {
+                if (!is_zip_archive) {
+                    printf("File is zip archive\n");
+                }
+                is_zip_archive = true;
+                printf("Current signature: %x\n", current_signature);
+                break;
+            }
         }
-
-        if (CENTRAL_DIRECTORY_SIGNATURE == current_signature) {
-            break;
-        }
-
-        printf("Current file signature: %x\n", current_signature);
-        if (LOCAL_FILE_SIGNATURE != current_signature) {
-            printf("File isn't zip archive\n");
-            fclose(fp);
-            exit(EXIT_SUCCESS);
-        }
-        printf("File is zip archive\n");
 
         // Get file length
         fseek(fp, 18, SEEK_CUR);
