@@ -56,7 +56,7 @@ int main(int argc, char **argv) {
         // Get file name length
         uint16_t filename_length = 0;
         fread(&filename_length, sizeof(uint16_t), 1, fp);
-        printf("Filename length: %u\n", filename_length + 1);
+        printf("Filename length: %u\n", filename_length);
 
         uint16_t extra_filed_length = 0;
         fread(&extra_filed_length, sizeof(uint16_t), 1, fp);
