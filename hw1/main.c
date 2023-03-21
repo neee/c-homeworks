@@ -1,9 +1,12 @@
 /**
  * Created by Sergey Serdyuk on 09.03.2023.
  */
-#include <stdio.h>
-#include <stdlib.h>
+#pragma once
+
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
 
 #define LOCAL_FILE_SIGNATURE 0x04034b50
 #define CENTRAL_DIRECTORY_SIGNATURE 0x02014b50
@@ -27,9 +30,6 @@ int main(int argc, char **argv) {
             break;
         }
 
-        /**
-         * Не ясно что лучше использовать макро переменную или константу для CENTRAL_DIRECTORY_SIGNATURE и LOCAL_FILE_SIGNATURE
-         */
         if (CENTRAL_DIRECTORY_SIGNATURE == current_signature) {
             break;
         }
@@ -58,7 +58,7 @@ int main(int argc, char **argv) {
         printf("Extra field length: %u\n", *extra_filed_length);
 
         // Get file name chars
-        char *filename = calloc(*filename_length, sizeof(char));
+        char *filename = calloc(*filename_length + 1, sizeof(char));
         if (filename == 0) {
             printf("Out of memory, can't allocate memory for file size");
             exit(EXIT_SUCCESS);
@@ -68,6 +68,11 @@ int main(int argc, char **argv) {
         printf("Filename: %s\n", filename);
         printf("-----------\n");
         fseek(fp, *extra_filed_length + *compressed_file_length, SEEK_CUR);
+
+        free(filename_length);
+        free(compressed_file_length);
+        free(extra_filed_length);
+        free(filename);
     }
 
     printf("Done!");
