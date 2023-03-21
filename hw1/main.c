@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
     FILE *fp = get_file(file_path);
 
     while (true) {
-        uint32_t current_signature;
+        uint32_t current_signature = 0;
         // Break if EOF
         size_t read_status = fread(&current_signature, sizeof(uint32_t), 1, fp);
         if (!read_status) {
@@ -43,35 +43,32 @@ int main(int argc, char **argv) {
         printf("File is zip archive\n");
 
         // Get file length
-        fseek(fp, 14, SEEK_CUR);
-        uint32_t *compressed_file_length = calloc(1, sizeof(compressed_file_length));
-        fread(compressed_file_length, sizeof(compressed_file_length), 1, fp);
-        printf("Compressed file size: %u bytes\n", *compressed_file_length);
+        fseek(fp, 18, SEEK_CUR);
+        uint32_t compressed_file_length = 0;
+        fread(&compressed_file_length, sizeof(compressed_file_length), 1, fp);
+        printf("Compressed file size: %u bytes\n", compressed_file_length);
 
         // Get file name length
-        uint16_t *filename_length = calloc(1, sizeof(uint16_t));
-        fread(filename_length, sizeof(uint16_t), 1, fp);
-        printf("Filename length: %u\n", *filename_length);
+        uint16_t filename_length = 0;
+        fread(&filename_length, sizeof(uint16_t), 1, fp);
+        printf("Filename length: %u\n", filename_length);
 
-        uint16_t *extra_filed_length = calloc(1, sizeof(uint16_t));
-        fread(extra_filed_length, sizeof(uint16_t), 1, fp);
-        printf("Extra field length: %u\n", *extra_filed_length);
+        uint16_t extra_filed_length = 0;
+        fread(&extra_filed_length, sizeof(uint16_t), 1, fp);
+        printf("Extra field length: %u\n", extra_filed_length);
 
         // Get file name chars
-        char *filename = calloc(*filename_length + 1, sizeof(char));
+        char *filename = calloc(filename_length, sizeof(char));
         if (filename == 0) {
             printf("Out of memory, can't allocate memory for file size");
             exit(EXIT_SUCCESS);
         }
 
-        fread(filename, sizeof(char), *filename_length, fp);
+        fread(filename, sizeof(char), filename_length, fp);
         printf("Filename: %s\n", filename);
         printf("-----------\n");
-        fseek(fp, *extra_filed_length + *compressed_file_length, SEEK_CUR);
+        fseek(fp, extra_filed_length + compressed_file_length, SEEK_CUR);
 
-        free(filename_length);
-        free(compressed_file_length);
-        free(extra_filed_length);
         free(filename);
     }
 
