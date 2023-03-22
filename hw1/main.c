@@ -44,9 +44,10 @@ int main(int argc, char **argv) {
                 is_zip_archive = true;
                 printf("Current signature: %x\n", current_signature);
                 break;
+            } else {
+                // Shift 1 byte back
+                fseek(fp, -1, SEEK_CUR);
             }
-            // Shift 1 byte back
-            fseek(fp, -1, SEEK_CUR);
         }
 
         // Get file length
