@@ -45,6 +45,8 @@ int main(int argc, char **argv) {
                 printf("Current signature: %x\n", current_signature);
                 break;
             }
+            // Shift 1 byte back
+            fseek(fp, -1, SEEK_CUR);
         }
 
         // Get file length
