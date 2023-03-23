@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "encdoing/koi8r.h"
-#include "encdoing/cp1251.h"
-#include "encdoing/iso88595.h"
+#include "encoding/koi8r.h"
+#include "encoding/cp1251.h"
+#include "encoding/iso88595.h"
 
 #define OUTPUT_FILENAME_SIZE 100
 
