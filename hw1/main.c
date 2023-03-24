@@ -1,8 +1,6 @@
 /**
  * Created by Sergey Serdyuk on 09.03.2023.
  */
-#pragma once
-
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -13,12 +11,12 @@
 FILE *get_file(const char *file_path);
 
 int main(int argc, char **argv) {
-    char *file_path = argv[1];
-    if (file_path == NULL && argc <= 1) {
+    if (argc < 2) {
         printf("Input file path as first argument (example: \"./main test.zip\")");
         exit(EXIT_FAILURE);
     }
 
+    char *file_path = argv[1];
     FILE *fp = get_file(file_path);
     bool is_zip_archive = false;
 
@@ -34,7 +32,6 @@ int main(int argc, char **argv) {
                     printf("File isn't zip archive\n");
                 }
                 printf("Done!");
-                fclose(fp);
                 exit(EXIT_SUCCESS);
             }
             if (LOCAL_FILE_SIGNATURE == current_signature) {
@@ -63,7 +60,6 @@ int main(int argc, char **argv) {
 
         uint16_t extra_filed_length = 0;
         fread(&extra_filed_length, sizeof(uint16_t), 1, fp);
-        printf("Extra field length: %u\n", extra_filed_length);
 
         // Get file name chars
         char *filename = calloc(filename_length + 1, sizeof(char));
