@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define LOCAL_FILE_SIGNATURE 0x04034b50
 
@@ -39,11 +40,10 @@ int main(int argc, char **argv) {
                     printf("File is zip archive\n");
                 }
                 is_zip_archive = true;
-                printf("Current signature: %x\n", current_signature);
                 break;
             } else {
-                // Shift 1 byte back
-                fseek(fp, -1, SEEK_CUR);
+                // Shift 3 byte back
+                fseek(fp, -3, SEEK_CUR);
             }
         }
 
@@ -51,29 +51,26 @@ int main(int argc, char **argv) {
         fseek(fp, 18, SEEK_CUR);
         uint32_t compressed_file_length = 0;
         fread(&compressed_file_length, sizeof(compressed_file_length), 1, fp);
-        printf("Compressed file size: %u bytes\n", compressed_file_length);
 
         // Get file name length
         uint16_t filename_length = 0;
         fread(&filename_length, sizeof(uint16_t), 1, fp);
-        printf("Filename length: %u\n", filename_length);
 
         uint16_t extra_filed_length = 0;
         fread(&extra_filed_length, sizeof(uint16_t), 1, fp);
 
         // Get file name chars
-        char *filename = calloc(filename_length + 1, sizeof(char));
-        if (filename == 0) {
-            printf("Out of memory, can't allocate memory for file size");
-            exit(EXIT_SUCCESS);
-        }
+        unsigned char filename[filename_length + 1];
+        memset(&filename, 0, filename_length + 1);
 
         fread(filename, sizeof(char), filename_length, fp);
-        printf("Filename: %s\n", filename);
-        printf("-----------\n");
-        fseek(fp, extra_filed_length + compressed_file_length, SEEK_CUR);
+        if (filename[filename_length - 1] == '/') {
+            printf("Dir: %s\n", filename);
+        } else {
+            printf("%s\n", filename);
+        }
 
-        free(filename);
+        fseek(fp, extra_filed_length, SEEK_CUR);
     }
 }
 
