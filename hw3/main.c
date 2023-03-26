@@ -2,6 +2,7 @@
 #include <ctype.h>
 #include <printf.h>
 #include <stdlib.h>
+#include <string.h>
 #include "hashtable.h"
 
 #define WORD_BUFFER_SIZE 100
@@ -31,13 +32,15 @@ int main(int argc, char **argv) {
             }
             word_buffer[word_length + 1] = '\0';
             Entity *entity = get_from_hash_table(word_buffer);
+            // Need copy string to another addr
+            unsigned char *word = (unsigned char *) strdup((char *) word_buffer);
             if (entity) {
-                put_to_hash_table(word_buffer, entity->value + 1);
+                put_to_hash_table(word, entity->value + 1);
             } else {
-                put_to_hash_table(word_buffer, 1);
+                put_to_hash_table(word, 1);
             }
             word_length = 0;
-            word_buffer = calloc(WORD_BUFFER_SIZE, sizeof(char));
+            memset(word_buffer, 0, WORD_BUFFER_SIZE);
             continue;
         }
 
