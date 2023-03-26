@@ -22,21 +22,21 @@ int main(int argc, char **argv) {
     int num_bytes = 0;
     int ch;
     unsigned char *word_buffer = calloc(WORD_BUFFER_SIZE, sizeof(char));
-    int word_end = 0;
+    int word_length = 0;
     while ((ch = fgetc(file)) != EOF) {
         char byte = (char) ch;
         if (isspace(byte) || ispunct(byte) || byte == '\n') {
             if (word_buffer[0] == 0) {
                 continue;
             }
-            word_buffer[word_end + 1] = '\0';
+            word_buffer[word_length + 1] = '\0';
             Entity *entity = get_from_hash_table(word_buffer);
             if (entity) {
                 put_to_hash_table(word_buffer, entity->value + 1);
             } else {
                 put_to_hash_table(word_buffer, 1);
             }
-            word_end = 0;
+            word_length = 0;
             word_buffer = calloc(WORD_BUFFER_SIZE, sizeof(char));
             continue;
         }
@@ -49,8 +49,8 @@ int main(int argc, char **argv) {
                 if (isalpha((char) codepoint)) {
                     codepoint = tolower((char) codepoint);
                 }
-                word_buffer[word_end] = codepoint;
-                word_end++;
+                word_buffer[word_length] = codepoint;
+                word_length++;
             } else if ((byte & 0xE0) == 0xC0) {
                 // Two-byte character
                 bytes[0] = byte;
@@ -82,10 +82,10 @@ int main(int argc, char **argv) {
                             bytes[1] = bytes[1] - 0x20;
                         }
                     }
-                    word_buffer[word_end] = bytes[0];
-                    word_end++;
-                    word_buffer[word_end] = bytes[1];
-                    word_end++;
+                    word_buffer[word_length] = bytes[0];
+                    word_length++;
+                    word_buffer[word_length] = bytes[1];
+                    word_length++;
                 }
             } else {
                 // Invalid UTF-8 sequence
