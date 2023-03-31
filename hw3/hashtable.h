@@ -15,4 +15,6 @@ Entity *get_from_hash_table(unsigned char *key);
 
 void print_hash_table(void);
 
+void free_hash_table(void);
+
 #endif

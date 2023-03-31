@@ -23,10 +23,13 @@ int main(int argc, char **argv) {
     int num_bytes = 0;
     int ch;
     unsigned char *word_buffer = calloc(WORD_BUFFER_SIZE, sizeof(char));
+    if (!word_buffer) {
+        printf("Error: not enough memory to create word buffer\n");
+    }
     int word_length = 0;
     while ((ch = fgetc(file)) != EOF) {
         char byte = (char) ch;
-        if (isspace(byte) || ispunct(byte) || byte == '\n') {
+        if (isspace(byte) || ispunct(byte) || byte == '\'' || byte == '"' || byte == '\n') {
             if (word_buffer[0] == 0) {
                 continue;
             }
@@ -98,6 +101,8 @@ int main(int argc, char **argv) {
     }
     print_hash_table();
     fclose(file);
+    free(word_buffer);
+    free_hash_table();
 
     exit(EXIT_SUCCESS);
 }

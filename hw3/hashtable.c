@@ -68,3 +68,13 @@ void print_hash_table(void) {
         }
     }
 }
+
+void free_hash_table(void) {
+    for (size_t i = 0; i < TABLE_SIZE; i++) {
+        Entity *e = hash_table[i];
+        if (e != NULL) {
+            free(e);
+        }
+    }
+    free(*hash_table);
+}
