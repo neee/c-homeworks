@@ -25,6 +25,7 @@ int main(int argc, char **argv) {
     unsigned char *word_buffer = calloc(WORD_BUFFER_SIZE, sizeof(char));
     if (!word_buffer) {
         printf("Error: not enough memory to create word buffer\n");
+        exit(EXIT_FAILURE);
     }
     int word_length = 0;
     while ((ch = fgetc(file)) != EOF) {
