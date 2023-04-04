@@ -8,9 +8,15 @@
 #include <printf.h>
 #include "hashtable.h"
 
-#define TABLE_SIZE 1000
+#define INITIAL_TABLE_SIZE 1000
 
-Entity *hash_table[TABLE_SIZE];
+static size_t hash_table_size = 0;
+static Entity **hash_table = NULL;
+
+void init_hash_table(int size) {
+    hash_table_size = size;
+    hash_table = (Entity **) calloc(sizeof(Entity*), hash_table_size);
+}
 
 unsigned int hash(unsigned char *key) {
     unsigned int hash_value = 0;
@@ -18,14 +24,17 @@ unsigned int hash(unsigned char *key) {
         hash_value = key[i] + (hash_value << 5) - hash_value;
     }
 
-    return hash_value % TABLE_SIZE;
+    return hash_value % hash_table_size;
 }
 
 int put_to_hash_table(unsigned char *key, unsigned int value) {
+    if (hash_table == NULL) {
+        init_hash_table(INITIAL_TABLE_SIZE);
+    }
     size_t index = hash(key);
 
-    for (size_t i = 0; i < TABLE_SIZE; i++) {
-        size_t attempt = (index + i) % TABLE_SIZE;
+    for (size_t i = 0; i < hash_table_size; i++) {
+        size_t attempt = (index + i) % hash_table_size;
         if (hash_table[attempt] == NULL) {
             Entity *new_entity = malloc(sizeof(Entity));
             new_entity->key = key;
@@ -44,10 +53,13 @@ int put_to_hash_table(unsigned char *key, unsigned int value) {
 }
 
 Entity *get_from_hash_table(unsigned char *key) {
+    if (hash_table == NULL) {
+        init_hash_table(INITIAL_TABLE_SIZE);
+    }
     size_t index = hash(key);
 
-    for (size_t i = 0; i < TABLE_SIZE; i++) {
-        size_t attempt = (index + i) % TABLE_SIZE;
+    for (size_t i = 0; i < hash_table_size; i++) {
+        size_t attempt = (index + i) % hash_table_size;
         if (hash_table[attempt] == NULL) {
             // Key not found in the table
             return NULL;
@@ -61,7 +73,7 @@ Entity *get_from_hash_table(unsigned char *key) {
 }
 
 void print_hash_table(void) {
-    for (size_t i = 0; i < TABLE_SIZE; i++) {
+    for (size_t i = 0; i < hash_table_size; i++) {
         Entity *e = hash_table[i];
         if (e != NULL) {
             printf("%s - %d\n", e->key, e->value);
@@ -70,7 +82,7 @@ void print_hash_table(void) {
 }
 
 void free_hash_table(void) {
-    for (size_t i = 0; i < TABLE_SIZE; i++) {
+    for (size_t i = 0; i < hash_table_size; i++) {
         Entity *e = hash_table[i];
         if (e != NULL) {
             free(e);
