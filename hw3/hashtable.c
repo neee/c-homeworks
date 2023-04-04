@@ -8,14 +8,17 @@
 #include <printf.h>
 #include "hashtable.h"
 
-#define INITIAL_TABLE_SIZE 1000
+#define INITIAL_TABLE_SIZE 2
 
 static size_t hash_table_size = 0;
+static size_t used_cells = 0;
 static Entity **hash_table = NULL;
+
+void expand_table(void);
 
 void init_hash_table(int size) {
     hash_table_size = size;
-    hash_table = (Entity **) calloc(sizeof(Entity*), hash_table_size);
+    hash_table = (Entity **) calloc(sizeof(Entity *), hash_table_size);
 }
 
 unsigned int hash(unsigned char *key) {
@@ -31,8 +34,11 @@ int put_to_hash_table(unsigned char *key, unsigned int value) {
     if (hash_table == NULL) {
         init_hash_table(INITIAL_TABLE_SIZE);
     }
+    // Is need to expand table
+    if ((100 / hash_table_size * used_cells) > 70) {
+        expand_table();
+    }
     size_t index = hash(key);
-
     for (size_t i = 0; i < hash_table_size; i++) {
         size_t attempt = (index + i) % hash_table_size;
         if (hash_table[attempt] == NULL) {
@@ -41,6 +47,7 @@ int put_to_hash_table(unsigned char *key, unsigned int value) {
             new_entity->value = value;
             hash_table[attempt] = new_entity;
             // Successful insertion
+            used_cells++;
             return 1;
         } else if (strcmp((char *) hash_table[attempt]->key, (char *) key) == 0) {
             // Key already exists in the table
@@ -52,12 +59,33 @@ int put_to_hash_table(unsigned char *key, unsigned int value) {
     return -1;
 }
 
+void expand_table(void) {
+    size_t old_size = hash_table_size;
+    Entity **old_table = hash_table;
+    hash_table_size = old_size * 2;
+    hash_table = (Entity **) calloc(sizeof(Entity *), hash_table_size);
+    for (size_t i = 0; i < old_size; i++) {
+        Entity *entity = old_table[i];
+        if (entity != NULL) {
+            size_t index = hash(entity->key);
+            for (size_t n = 0; n < hash_table_size; n++) {
+                size_t attempt = (index + n) % hash_table_size;
+                if (hash_table[attempt] == NULL) {
+                    hash_table[attempt] = entity;
+                    break;
+                }
+            }
+        }
+    }
+    printf("### DEBUG: Resize hash table (used %zu) from: %zu to %zu\n", used_cells, old_size, hash_table_size);
+    free(old_table);
+}
+
 Entity *get_from_hash_table(unsigned char *key) {
     if (hash_table == NULL) {
         init_hash_table(INITIAL_TABLE_SIZE);
     }
     size_t index = hash(key);
-
     for (size_t i = 0; i < hash_table_size; i++) {
         size_t attempt = (index + i) % hash_table_size;
         if (hash_table[attempt] == NULL) {
@@ -88,5 +116,6 @@ void free_hash_table(void) {
             free(e);
         }
     }
-    free(*hash_table);
+    free(hash_table);
+    printf("### DEBUG: Free mem hash table\n");
 }
