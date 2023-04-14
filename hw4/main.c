@@ -28,7 +28,7 @@ static size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, voi
 }
 
 int main(int argc, char **argv) {
-    // Validate input args
+    /* Validate input args */
     if (argc < 2) {
         fprintf(stderr, "City wasn't defined, please use: './weather moscow' or './weather Moscow'");
         exit(EXIT_FAILURE);
@@ -50,6 +50,11 @@ int main(int argc, char **argv) {
     /* init the curl session */
     curl_handle = curl_easy_init();
 
+    if (!curl_handle) {
+        fprintf(stderr, "Failed to initialize curl\n");
+        exit(EXIT_FAILURE);
+    }
+
     /* specify URL to get */
     curl_easy_setopt(curl_handle, CURLOPT_URL, request_url);
 
@@ -68,106 +73,73 @@ int main(int argc, char **argv) {
 
     /* check for errors */
     if (res != CURLE_OK) {
-        fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+        fprintf(stderr, "Curl perform failed: %s\n", curl_easy_strerror(res));
     } else {
-        /*
-         * Now, our chunk.memory points to a memory block that is chunk.size
-         * bytes big and contains the remote file.
-         *
-         * Do something nice with it!
-         */
+        /* Parse response and set variables */
+        struct json_object *root = json_tokener_parse(chunk.memory);
+        if (!root) {
+            fprintf(stderr, "Failed to parse JSON\n");
+            curl_easy_cleanup(curl_handle);
+            free(chunk.memory);
+            curl_global_cleanup();
 
-        printf("%s bytes retrieved\n", chunk.memory);
+            exit(EXIT_FAILURE);
+        }
+
+        struct json_object *current_condition_array;
+        struct json_object *current_condition;
+        struct json_object *current_weather_desc;
+        struct json_object *current_weather_definition_value;
+        struct json_object *current_weather_temp;
+        struct json_object *current_wind_speed_kmh;
+        struct json_object *current_wind_direction_degree;
+        struct json_object *current_weather_definition;
+
+        json_object_object_get_ex(root, "current_condition", &current_condition_array);
+        current_condition = json_object_array_get_idx(current_condition_array, 0);
+        json_object_object_get_ex(current_condition, "weatherDesc", &current_weather_desc);
+        current_weather_definition = json_object_array_get_idx(current_weather_desc, 0);
+        json_object_object_get_ex(current_weather_definition, "value", &current_weather_definition_value);
+        json_object_object_get_ex(current_condition, "temp_C", &current_weather_temp);
+        json_object_object_get_ex(current_condition, "windspeedKmph", &current_wind_speed_kmh);
+        json_object_object_get_ex(current_condition, "winddirDegree", &current_wind_direction_degree);
+
+        /* Print current conditions */
+        printf("-----------------------------------\n");
+        printf("Current weather:\n");
+        printf("  Definition: '%s'\n", json_object_get_string(current_weather_definition_value));
+        printf("  Temperature: '%s'\n", json_object_get_string(current_weather_temp));
+        printf("  Wind speed: '%s' km/h\n", json_object_get_string(current_wind_speed_kmh));
+        printf("  Wind direction degree: '%s'\n", json_object_get_string(current_wind_direction_degree));
+        printf("-----------------------------------\n");
+
+        /* Forecast variables */
+        struct json_object *date;
+        struct json_object *minTempC;
+        struct json_object *maxTempC;
+        struct json_object *weather_array;
+
+        /* Parse forecast on next days */
+        printf("Forecast on next few days:\n");
+        json_object_object_get_ex(root, "weather", &weather_array);
+        size_t days = json_object_array_length(weather_array);
+        for (size_t i = 0; i < days; i++) {
+            struct json_object *day = json_object_array_get_idx(weather_array, i);
+            json_object_object_get_ex(day, "date", &date);
+            json_object_object_get_ex(day, "mintempC", &minTempC);
+            json_object_object_get_ex(day, "maxtempC", &maxTempC);
+            /* Print forecast on next days */
+            printf("  Date %s\n", json_object_get_string(date));
+            printf("    Temperature range: %s°C to %s°C\n", json_object_get_string(minTempC), json_object_get_string(maxTempC));
+        }
+        printf("-----------------------------------\n");
+
+        json_object_put(root);
     }
 
-    /* cleanup curl stuff */
     curl_easy_cleanup(curl_handle);
-
     free(chunk.memory);
-
-    /* we are done with libcurl, so clean it up */
     curl_global_cleanup();
 
-    return 0;
+    return EXIT_SUCCESS;
 }
-//
-//static size_t write_callback(void *data, size_t size, size_t nmemb, void *userp) {
-//    size_t chunk_size = size * nmemb;
-//    response_chunk *chunk = (response_chunk *) userp;
-//    /**
-//     * Не могу найти причину почему тут при первом заполнении приходит очень большое число, пробовал уже и обнулять
-//     * при первом создании структуры в main и через calloc не вышло... сделал пока такой хак
-//     */
-//    if (chunk->size > 1000000) {
-//        chunk->size = 0;
-//    }
-//
-//    char *ptr = realloc(chunk->chars, chunk->size + chunk_size + 1);
-//    if (ptr == NULL) {
-//        return 0;
-//    }
-//
-//    chunk->chars = ptr;
-//    memcpy(&(chunk->chars[chunk->size]), data, chunk_size);
-//    chunk->size += chunk_size;
-//    chunk->chars[chunk->size] = 0;
-//
-//    return chunk_size;
-//}
-//
-//int main(int argc, char **argv) {
-//    // Validate input args
-//    if (argc < 2) {
-//        fprintf(stderr, "City wasn't defined, please use: './weather moscow' or './weather Moscow'");
-//        exit(EXIT_FAILURE);
-//    }
-//    char request_url[128];
-//    memset(request_url, 0, 128);
-//    sprintf(request_url, "https://wttr.in/%s?format=j1", argv[1]);
-//
-//    // Request preparation
-//    CURL *curl = curl_easy_init();
-//    if (!curl) {
-//        fprintf(stderr, "Failed to initialize curl\n");
-//        exit(EXIT_FAILURE);
-//    }
-//
-//    struct curl_slist *headers = NULL;
-//    headers = curl_slist_append(headers, "Accept: application/json");
-//    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-//    curl_easy_setopt(curl, CURLOPT_URL, request_url);
-//
-//    response_chunk *chunk = {0};
-//    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
-//    curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *) &chunk);
-//
-//    // Make request
-//    CURLcode curlResponse = curl_easy_perform(curl);
-//    if (curlResponse != CURLE_OK) {
-//        fprintf(stderr, "Curl call error: %s\n", curl_easy_strerror(curlResponse));
-//        curl_slist_free_all(headers);
-//        curl_easy_cleanup(curl);
-//        exit(EXIT_FAILURE);
-//    }
-//
-//    // Check chunk code
-//    long http_code = 0;
-//    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
-//    if (http_code != 200) {
-//        fprintf(stderr, "Error response code from remote server: %ld\n", http_code);
-//        curl_slist_free_all(headers);
-//        curl_easy_cleanup(curl);
-//        exit(EXIT_FAILURE);
-//    }
-//
-//    /**
-//     * Не могу понять почему chunk->chars = "", в дебаге в фунции write_callback значения пишутеся в переменную и она пересоздается
-//     * Тут нужна помощь
-//     */
-//    printf("JSON: %s", chunk->chars);
-//    free(chunk->chars);
-//
-//    curl_slist_free_all(headers);
-//    curl_easy_cleanup(curl);
-//    exit(EXIT_SUCCESS);
-//}
