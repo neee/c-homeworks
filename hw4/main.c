@@ -3,12 +3,14 @@
 #include <json-c/json.h>
 #include <string.h>
 
+static void print_weather(struct json_object *root);
+
 struct MemoryStruct {
     char *memory;
     size_t size;
 };
 
-static size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp) {
+static size_t write_memory_callback(void *contents, size_t size, size_t nmemb, void *userp) {
     size_t realsize = size * nmemb;
     struct MemoryStruct *mem = (struct MemoryStruct *) userp;
 
@@ -59,7 +61,7 @@ int main(int argc, char **argv) {
     curl_easy_setopt(curl_handle, CURLOPT_URL, request_url);
 
     /* send all data to this function  */
-    curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
+    curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, write_memory_callback);
 
     /* we pass our 'chunk' struct to the callback function */
     curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *) &chunk);
@@ -86,55 +88,7 @@ int main(int argc, char **argv) {
             exit(EXIT_FAILURE);
         }
 
-        struct json_object *current_condition_array;
-        struct json_object *current_condition;
-        struct json_object *current_weather_desc;
-        struct json_object *current_weather_definition_value;
-        struct json_object *current_weather_temp;
-        struct json_object *current_wind_speed_kmh;
-        struct json_object *current_wind_direction_degree;
-        struct json_object *current_weather_definition;
-
-        json_object_object_get_ex(root, "current_condition", &current_condition_array);
-        current_condition = json_object_array_get_idx(current_condition_array, 0);
-        json_object_object_get_ex(current_condition, "weatherDesc", &current_weather_desc);
-        current_weather_definition = json_object_array_get_idx(current_weather_desc, 0);
-        json_object_object_get_ex(current_weather_definition, "value", &current_weather_definition_value);
-        json_object_object_get_ex(current_condition, "temp_C", &current_weather_temp);
-        json_object_object_get_ex(current_condition, "windspeedKmph", &current_wind_speed_kmh);
-        json_object_object_get_ex(current_condition, "winddirDegree", &current_wind_direction_degree);
-
-        /* Print current conditions */
-        printf("-----------------------------------\n");
-        printf("Current weather:\n");
-        printf("  Definition: '%s'\n", json_object_get_string(current_weather_definition_value));
-        printf("  Temperature: '%s'\n", json_object_get_string(current_weather_temp));
-        printf("  Wind speed: '%s' km/h\n", json_object_get_string(current_wind_speed_kmh));
-        printf("  Wind direction degree: '%s'\n", json_object_get_string(current_wind_direction_degree));
-        printf("-----------------------------------\n");
-
-        /* Forecast variables */
-        struct json_object *date;
-        struct json_object *minTempC;
-        struct json_object *maxTempC;
-        struct json_object *weather_array;
-
-        /* Parse forecast on next days */
-        printf("Forecast on next few days:\n");
-        json_object_object_get_ex(root, "weather", &weather_array);
-        size_t days = json_object_array_length(weather_array);
-        for (size_t i = 0; i < days; i++) {
-            struct json_object *day = json_object_array_get_idx(weather_array, i);
-            json_object_object_get_ex(day, "date", &date);
-            json_object_object_get_ex(day, "mintempC", &minTempC);
-            json_object_object_get_ex(day, "maxtempC", &maxTempC);
-            /* Print forecast on next days */
-            printf("  Date %s\n", json_object_get_string(date));
-            printf("    Temperature range: %s°C to %s°C\n", json_object_get_string(minTempC), json_object_get_string(maxTempC));
-        }
-        printf("-----------------------------------\n");
-
-        json_object_put(root);
+        print_weather(root);
     }
 
     curl_easy_cleanup(curl_handle);
@@ -142,4 +96,71 @@ int main(int argc, char **argv) {
     curl_global_cleanup();
 
     return EXIT_SUCCESS;
+}
+
+static void print_weather(struct json_object *root) {
+    struct json_object *current_condition_array;
+    struct json_object *current_condition;
+    struct json_object *current_weather_desc;
+    struct json_object *current_weather_definition_value;
+    struct json_object *current_weather_temp;
+    struct json_object *current_wind_speed_kmh;
+    struct json_object *current_wind_direction_degree;
+    struct json_object *current_weather_definition;
+
+    json_object_object_get_ex(root, "current_condition", &current_condition_array);
+    current_condition = json_object_array_get_idx(current_condition_array, 0);
+    json_object_object_get_ex(current_condition, "weatherDesc", &current_weather_desc);
+    current_weather_definition = json_object_array_get_idx(current_weather_desc, 0);
+    json_object_object_get_ex(current_weather_definition, "value", &current_weather_definition_value);
+    json_object_object_get_ex(current_condition, "temp_C", &current_weather_temp);
+    json_object_object_get_ex(current_condition, "windspeedKmph", &current_wind_speed_kmh);
+    json_object_object_get_ex(current_condition, "winddirDegree", &current_wind_direction_degree);
+
+    /* Print current conditions */
+    printf("-----------------------------------\n");
+    printf("Current weather:\n");
+    printf("  Definition: '%s'\n", json_object_get_string(current_weather_definition_value));
+    printf("  Temperature: '%s'\n", json_object_get_string(current_weather_temp));
+    printf("  Wind speed: '%s' km/h\n", json_object_get_string(current_wind_speed_kmh));
+    printf("  Wind direction degree: '%s'\n", json_object_get_string(current_wind_direction_degree));
+    printf("-----------------------------------\n");
+
+    /* Forecast variables */
+    struct json_object *date;
+    struct json_object *minTempC;
+    struct json_object *maxTempC;
+    struct json_object *weather_array;
+    struct json_object *day;
+
+    /* Parse forecast on next days */
+    printf("Forecast on next few days:\n");
+    json_object_object_get_ex(root, "weather", &weather_array);
+    size_t days = json_object_array_length(weather_array);
+    for (size_t i = 0; i < days; i++) {
+        day = json_object_array_get_idx(weather_array, i);
+        json_object_object_get_ex(day, "date", &date);
+        json_object_object_get_ex(day, "mintempC", &minTempC);
+        json_object_object_get_ex(day, "maxtempC", &maxTempC);
+        /* Print forecast on next days */
+        printf("  Date %s\n", json_object_get_string(date));
+        printf("    Temperature range: %s°C to %s°C\n", json_object_get_string(minTempC),
+               json_object_get_string(maxTempC));
+    }
+    printf("-----------------------------------\n");
+
+    free(current_condition_array);
+    free(current_condition);
+    free(current_weather_desc);
+    free(current_weather_definition_value);
+    free(current_weather_temp);
+    free(current_wind_speed_kmh);
+    free(current_wind_direction_degree);
+    free(current_weather_definition);
+    free(date);
+    free(minTempC);
+    free(maxTempC);
+    free(weather_array);
+    free(day);
+    json_object_put(root);
 }
