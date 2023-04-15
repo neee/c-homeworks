@@ -6,4 +6,4 @@ set(CMAKE_C_STANDARD 11)
 
 add_compile_options(-Wall -Wextra -Wpedantic)
 
-add_executable(hw6 main.c)
+add_executable(hw6 main.c clog.c clog.h)

@@ -1,9 +1,12 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
-int main(int argc, char **argv) {
-    printf("test");
+#include <stdlib.h>
+#include "clog.h"
+
+int main(void) {
+    clog_init(CLOG_LEVEL_DEBUG, NULL);
+    LOG_DEBUG("test4");
+    LOG_ERROR("test5");
+    clog_close();
 
     return EXIT_SUCCESS;
 }
