@@ -43,9 +43,9 @@ static void print_trace(FILE *log_file) {
     size = backtrace(array, 10);
     strings = backtrace_symbols(array, size);
     if (strings != NULL) {
-        printf("Obtained %d stack frames.\n", size);
+        fprintf(log_file, "\t\tObtained %d stack frames.\n", size);
         for (i = 0; i < size; i++) {
-            fprintf(log_file, "%s\n", strings[i]);
+            fprintf(log_file, "\t\t%s\n", strings[i]);
         }
     }
 
