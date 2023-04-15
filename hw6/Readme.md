@@ -1,5 +1,8 @@
-# Print weather
+# C Log library
 
 1. Git clone
-2. Build: `gcc main.c -o weather -lcurl -ljson-c`
-3. Run `./weather moscow`
+2. gcc -c clog.c
+3. ar rcs lib_cLog.a clog.o
+4. gcc main.c -o main
+5. gcc -o main main.c -L. -l_cLog
+6. ./main
