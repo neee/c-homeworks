@@ -1,7 +1,3 @@
-//
-// Created by Sergey Serdyuk on 16.04.2023.
-//
-
 #include "clog.h"
 
 #include <stdlib.h>
