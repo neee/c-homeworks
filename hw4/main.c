@@ -2,8 +2,14 @@
 #include <curl/curl.h>
 #include <json-c/json.h>
 #include <string.h>
+#include <stdbool.h>
+#include <ctype.h>
 
-static void print_weather(struct json_object *root);
+static void print_weather(struct json_object *);
+
+static bool validate_location(char *, struct json_object *);
+
+char *to_lowercase(const char *);
 
 struct MemoryStruct {
     char *memory;
@@ -37,7 +43,12 @@ int main(int argc, char **argv) {
     }
     char request_url[128];
     memset(request_url, 0, 128);
-    sprintf(request_url, "https://wttr.in/%s?format=j1", argv[1]);
+
+    printf("Request weather for '%s' city\n", argv[1]);
+    /* Make city name in lowercase */
+    char *city = to_lowercase(argv[1]);
+
+    sprintf(request_url, "https://wttr.in/%s?format=j1", city);
 
     CURL *curl_handle;
     CURLcode res;
@@ -87,6 +98,11 @@ int main(int argc, char **argv) {
 
             exit(EXIT_FAILURE);
         }
+        if (!validate_location(city, root)) {
+            fprintf(stderr, "Weather for the city '%s' not found, please try with another city\n", city);
+
+            exit(EXIT_FAILURE);
+        }
 
         print_weather(root);
     }
@@ -94,8 +110,63 @@ int main(int argc, char **argv) {
     curl_easy_cleanup(curl_handle);
     free(chunk.memory);
     curl_global_cleanup();
+    free(city);
 
     return EXIT_SUCCESS;
+}
+
+char *to_lowercase(const char *input) {
+    char *output = (char *) calloc(strlen(input) + 1, sizeof(char));
+    for (int i = 0; input[i]; i++) {
+        output[i] = (char) tolower(input[i]);
+    }
+
+    return output;
+}
+
+static bool validate_location(char *city, struct json_object *root) {
+    struct json_object *nearest_area_array;
+    struct json_object *nearest_area;
+    struct json_object *nearest_area_name;
+    struct json_object *area_name_array;
+    struct json_object *area_name_value;
+    char *value_in_lowercase;
+
+    json_object_object_get_ex(root, "nearest_area", &nearest_area_array);
+    size_t areas_count = json_object_array_length(nearest_area_array);
+    if (areas_count == 0) {
+        return false;
+    }
+
+    for (int i = 0; i < areas_count; ++i) {
+        nearest_area = json_object_array_get_idx(nearest_area_array, i);
+        json_object_object_get_ex(nearest_area, "areaName", &area_name_array);
+        size_t area_name_array_count = json_object_array_length(area_name_array);
+        for (int j = 0; j < area_name_array_count; ++j) {
+            nearest_area_name = json_object_array_get_idx(area_name_array, i);
+            json_object_object_get_ex(nearest_area_name, "value", &area_name_value);
+            value_in_lowercase = to_lowercase(json_object_get_string(area_name_value));
+            if (strcmp(value_in_lowercase, city) == 0) {
+                free(value_in_lowercase);
+                free(nearest_area_array);
+                free(nearest_area);
+                free(nearest_area_name);
+                free(area_name_array);
+                free(area_name_value);
+
+                return true;
+            }
+        }
+    }
+
+    free(value_in_lowercase);
+    free(nearest_area_array);
+    free(nearest_area);
+    free(nearest_area_name);
+    free(area_name_array);
+    free(area_name_value);
+
+    return false;
 }
 
 static void print_weather(struct json_object *root) {
@@ -144,8 +215,7 @@ static void print_weather(struct json_object *root) {
         json_object_object_get_ex(day, "maxtempC", &maxTempC);
         /* Print forecast on next days */
         printf("  Date %s\n", json_object_get_string(date));
-        printf("    Temperature range: %s°C to %s°C\n", json_object_get_string(minTempC),
-               json_object_get_string(maxTempC));
+        printf("    Temperature range: %s°C to %s°C\n", json_object_get_string(minTempC), json_object_get_string(maxTempC));
     }
     printf("-----------------------------------\n");
 
