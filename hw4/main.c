@@ -58,7 +58,12 @@ int main(int argc, char **argv) {
     chunk.memory = malloc(1);  /* will be grown as needed by the realloc above */
     chunk.size = 0;    /* no data at this point */
 
-    curl_global_init(CURL_GLOBAL_ALL);
+    res = curl_global_init(CURL_GLOBAL_ALL);
+    if (res != 0) {
+        fprintf(stderr, "Failed to initialize curl\n");
+
+        exit(EXIT_FAILURE);
+    }
 
     /* init the curl session */
     curl_handle = curl_easy_init();
@@ -87,6 +92,8 @@ int main(int argc, char **argv) {
     /* check for errors */
     if (res != CURLE_OK) {
         fprintf(stderr, "Curl perform failed: %s\n", curl_easy_strerror(res));
+
+        exit(EXIT_FAILURE);
     } else {
         /* Parse response and set variables */
         struct json_object *root = json_tokener_parse(chunk.memory);
