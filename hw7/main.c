@@ -14,6 +14,7 @@ void print_int(long n) {
     fflush(stdout);
 }
 
+// Функция предикат
 long p(long n) {
     return n & 1;
 }
@@ -28,15 +29,17 @@ Pair *add_element(long first, long second) {
     return pair;
 }
 
-void m(Pair *pair, void (*fn)(long)) {
+// Рекурсивный обход (в нашем случае для вывода на экран с помощью print_int
+void m(Pair *pair, void (*func)(long)) {
     if (pair == NULL) {
         return;
     }
-    fn(pair->first);
-    m((Pair *) pair->second, fn);
+    func(pair->first);
+    m((Pair *) pair->second, func);
 }
 
-Pair *f(Pair *pair, void *data_value, long (*pred)(long), Pair *acc) {
+// Функция фильтрации
+Pair *f(Pair *pair, void *values, long (*pred)(long), Pair *acc) {
     if (pair == NULL) {
         return acc;
     }
@@ -46,7 +49,7 @@ Pair *f(Pair *pair, void *data_value, long (*pred)(long), Pair *acc) {
     } else {
         acc = (Pair *) pair->second;
     }
-    return f((Pair *) pair->second, data_value, pred, acc);
+    return f((Pair *) pair->second, values, pred, acc);
 }
 
 int main() {
