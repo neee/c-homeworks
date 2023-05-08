@@ -1,0 +1,19 @@
+Subject: [PATCH] Add free for repo and href (fix memory leak)
+---
+Index: src/clib-search.c
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/clib-search.c b/src/clib-search.c
+--- a/src/clib-search.c	(revision d6f105e91b486847779c19e0b7c6cb43a79046ee)
++++ b/src/clib-search.c	(date 1683567753734)
+@@ -87,6 +87,8 @@
+ cleanup:
+   free(name);
+   free(description);
++  free(repo);
++  free(href);
+   return rc;
+ }
+ 
